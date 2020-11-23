@@ -1,0 +1,231 @@
+import urllib.request
+import urllib.parse
+import json
+import collections
+import matplotlib.pyplot as plt
+import requests
+import time
+import thingspeak_params
+
+'''
+Put "import thingspeak" or "from Thingspeak import Channel" near the top of your python file.
+This module gives you a few functions to communicate over a specific Thingspeak channel.
+The channel is an object; which means it must be declared as one and methods must be called as members of the declared object.
+
+METHODS:
+X =channel(): 	Constructor. Can be given four optional parameters: channel_ID, write_API, read_API, and clear_API.
+		All of them can be found on Thingspeak channel settings. Defaults can be changed in def __init__()
+		Remember to use thingspeak.channel if the entire module is imported instead of the just the class.
+X.send(item):  	Buffer for strings that need to be sent over the channel. Parameter: string that needs to be sent.
+		All strings need to be members of the DOTA dataset - for exact syntax, look at the first variable in class definition.
+X.transmit(): 	Transmits everything in the buffer sequentially.
+X.get():	Returns a collections.Counter() object (can be manipulated like a dict)
+		Key - object type; Value - number of times that object was sent over the channel.
+X.get_table():	Calls the get() method, and presents the items as a table.
+X.get_img():	Calls the get() method, and then plots the key-value pairs on a bar graph
+X.clear():	Clears all messages in the channel.
+
+X.read_url:	Copy-paste the result of this (when you run it in python3 terminal) to see all JSON objects added in the
+		channel in the last 24 hours.
+'''
+
+
+#TO ADAPT THIS FOR ANY OBJECT DETECTION APPLICATION, CHANGE ONLY THESE VALUES
+#These four values can be found on your Thingspeak profile
+channel_ID='1235685'
+write_API='TPB1N6LRBAHTXJP1'
+read_API='PGD7HSTN6AHXLA8F'
+clear_API='FZ49PDSPUD979SE1'
+
+#This is a label map for the Tensorflow Object Detection API. Ensure list index corresponds to class label; if the labels start from 1, add a leading 'null' to this list.
+#Warning: make sure the list length is no greater than 98.
+label_map = ['null','plane', 'baseball-diamond', 'bridge', 'ground-track-field', 'small-vehicle', 'large-vehicle', 'ship', 'tennis-court', 'basketball-court', 'storage-tank', 'soccer-ball-field', 'roundabout', 'harbor', 'swimming-pool', 'helicopter']
+
+class channel:
+
+	def __init__(self):
+		self.channel_ID = thingspeak_params.channel_ID
+		self.write_API = thingspeak_params.write_API
+		self.read_API = thingspeak_params.read_API
+		self.clear_API = thingspeak_params.clear_API
+		self.label_map = thingspeak_params.label_map
+
+		self.itemlist = []	#Buffer for sending messages
+
+		self.read_url = 'https://api.thingspeak.com/channels/' + self.channel_ID + '/feeds.json?api_key=' + self.read_API
+
+		#Retrieve the last entry made, and convert the returned JSON object to dictionary
+		url = 'https://api.thingspeak.com/channels/' + self.channel_ID + '/feeds/last?api_key=' + self.read_API
+		f = urllib.request.urlopen(url)
+		if f.getcode() is 200:
+			print('Connection successful...')
+		else:
+			print('Connection unsuccessful. Aborting.')
+
+		data = json.load(f)
+
+		try:
+			if data.get('field8') <= 0:
+				print('Unrecognised pre-existing data. Clearing channel...')
+				self.clear()
+				self.numberOfMessages = 0			
+			if data is -1:
+				self.numberOfMessages = 0
+			else:
+				self.numberOfMessages = data.get('field8')
+		except:
+			print('Unrecognised pre-existing data. Clearing channel...')
+			self.clear()
+			self.numberOfMessages = 0
+
+		#if self.numberOfMessages is None or self.numberOfMessages:
+		#	print('Unrecognised pre-existing data. Clearing channel...')
+		#	self.clear()
+		#	self.numberOfMessages = 0
+
+		print('Channel opened')
+
+
+	#function to return last entry. Useful for debug purposes, so let it remain.
+	def get_last_entry(self):
+		url = 'https://api.thingspeak.com/channels/' + self.channel_ID + '/feeds/last?api_key=' + self.read_API
+		f = urllib.request.urlopen(url)
+		data = json.load(f)
+		return f.getcode()
+
+	#Add object to buffer
+	def send(self,item):
+
+		try:
+			if item > len(self.label_map):
+				print('Invalid entry, no corresponding label for index '+str(item))
+				return
+		except:
+			print('Invalid input, ' + str(item) +' is not an integer.')
+			return
+
+		#Append to a list. Note: one entry can only send 91 objects at a time, so we send 90 objects in one time.
+		self.itemlist.append(str(item))
+		print(self.label_map[item] +' added to buffer')
+		if len(self.itemlist) >= 594:
+			print('Buffer full! Transmitting data...')
+			self.transmit()
+
+
+
+	def transmit(self):
+		#Get the length of the item array
+		#string = 2 characters; word = 85 strings; block = 7 words; 1 block = 1 entry.
+		length = len(self.itemlist)
+		i = 0
+		itemwords = [None]*7
+
+		#Split up the items in the buffer into words (i.e, lists of 85 strings).
+		#buffer can be expressed as 85x+y (if less than 91). x will be number of words; y also forms a word, managed by the part outside the while loop.
+		while(i < length//85):
+			itemwords[i] = ','.join(self.itemlist[i*85:(i+1)*85])
+			i += 1
+
+		if length%85 is not 0:
+			itemwords[i] = ','.join(self.itemlist[-(length%85):])
+		url_end = ''
+		k = 0
+		while k<=i and  itemwords[k] is not None:
+			url_end += '&field'+str(k+1)+'='+itemwords[k]
+			k += 1
+
+		#The last field is for cumulative total of objects, not regular data.
+		url_end += '&field8=' + str(length + self.numberOfMessages)
+
+		#Create the URL from the processing done above, and send it using HTTPS GET.
+		url = 'https://api.thingspeak.com/update.json?api_key=' + self.write_API + url_end
+		f = urllib.request.urlopen(url)
+
+		#On the offhand chance that you call the transmit() twice within 15 seconds of each other.
+		returndata = json.load(f)
+		if returndata is 0:
+			while(returndata is 0):
+				print('15 second delay between messages for free Thingspeak account.\nRetrying...')
+				time.sleep(15)
+				f = urllib.request.urlopen(url)
+				returndata = json.load(f)
+
+		self.numberOfMessages += length
+
+		self.itemlist = []
+		if f.getcode() is 200:
+			print('Transmission successful...')
+		else:
+			print('Transmission unsuccessful. Aborting...')
+			return
+
+
+	def get(self):
+		#Read all entries made in the last 24 hours. Returns a JSON.
+		f = urllib.request.urlopen(self.read_url)
+		data = json.load(f)
+		c = collections.Counter()
+		itemwords = [None]*7
+		for feed in data.get('feeds'):
+			for i in range(7):
+				if feed.get('field'+str(i+1)) is not None:
+					itemwords[i] = feed.get('field'+str(i+1)).split(',')
+					c.update(itemwords[i])
+
+		finaldict = {}
+		for i,j in c.items():
+			finaldict[str(self.label_map[int(i)])] = j
+
+		return finaldict
+
+	def get_table(self):
+		if self.numberOfMessages <= 0:
+			print('No entries. Aborting...')
+			return
+
+		print("Count".rjust(9), "Name")
+		print("\n".join(f'{v:9,} {k}' for k,v in self.get().items()))
+
+	def get_img(self):
+		if self.numberOfMessages <= 0:
+			print('No entries. Aborting...')
+			return
+
+		print('Opening bar graph...')
+		keys, values = zip(*self.get().items())
+		fig=plt.figure(figsize=(10,5))
+
+		plt.bar(keys, values, color='maroon', width=0.4)
+		plt.xlabel('Objects')
+		plt.ylabel('Frequency')
+		plt.title('Representation of object occurrence')
+		plt.show()
+		print('Bar graph closed.')
+
+	def clear(self):
+		url = 'https://api.thingspeak.com/channels/'+self.channel_ID+'/feeds.json?api_key='+self.clear_API
+		response = requests.delete(url)
+		self.numberOfMessages = 0
+		if response.status_code is 200:
+			print('Channel cleared.')
+		else:
+			print('Error in clearing the channel. Aborting.')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
