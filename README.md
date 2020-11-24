@@ -5,9 +5,7 @@ Note: Thingspeak works on a publish-subscribe model, so there can be multiple ch
 
 ###Installation###
 thingspeak.py and thingspeak_params.py must be in your project folder, the same one you invoke the module from.
-Install `matplotlib` and `requests` using `pip3`
-`pip3 install matplotlib`
-`pip3 install requests`
+The module only uses two non-inbuilt python packages - `matplotlib` and `requests`. Install by running `pip3 install <package>` on terminal.
 
 ###Usage###
 - Server side: Send data by invoking the thingspeak.send() and thingspeak.transmit(). Send label or index as parameter to thingspeak.send(), index gets stored in a buffer (594 max values) and thingspeak.transmit() sends the buffer as one entry.
