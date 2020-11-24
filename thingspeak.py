@@ -124,7 +124,8 @@ class channel:
             k += 1
 
         last_data = self.get_last_entry()
-        self.numberOfMessages = int(last_data.get('field8'))
+        if self.numberOfMessages is not 0:
+            self.numberOfMessages = int(last_data.get('field8'))
         
 
         #The last field is for cumulative total of objects, not regular data.
