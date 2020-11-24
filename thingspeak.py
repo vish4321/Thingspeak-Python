@@ -109,13 +109,14 @@ class channel:
         itemwords = [None]*7
 
 	#Split up the items in the buffer into words (i.e, lists of 85 strings).
-	#buffer can be expressed as 85x+y (if less than 91). x will be number of words; y also forms a word, managed by the part outside the while loop.
+	#buffer can be expressed as 85x+y (if less than 594). x will be number of words; y also forms a word, managed by the part outside the while loop.
         while(i < length//85):
             itemwords[i] = ','.join(self.itemlist[i*85:(i+1)*85])
             i += 1
 
         if length%85 is not 0:
             itemwords[i] = ','.join(self.itemlist[-(length%85):])
+
         url_end = ''
         k = 0
         while k<=i and  itemwords[k] is not None:
