@@ -4,7 +4,7 @@ print('\nWelcome to the interactive demo for this Thingspeak API module in Pytho
 print('This will take you through the important functions and variables in this module.')
 print('When you see a blinking cursor, press ENTER once to continue.')
 input()
-print('Although this was written to be used with TF2.0 Object Detection API and the DOTA dataset, it can be used for any Thingspeak application that involves sending messages sequentially from a predefined pool of <98 messages.')
+print('Although this was written to be used with TF2.0 Object Detection API and the DOTA dataset, it can be used for any Thingspeak application that involves sending messages sequentially from a predefined pool of <99 messages.')
 input()
 print('Through the course of this demo, I will be showing lines of code prefixed by the \'>>>\' symbol.')
 print('The result you see would be as though you had run the code in the interpreter, or in another script.')
@@ -58,19 +58,44 @@ print(line)
 print('Enter the URL above into your browser window. Preferable one that formats JSON objects, like Firefox, because Thingspeak primarily sends and receives data using JSON objects (though XML can also be used.)')
 input()
 print('We see that the channel is empty. So, time to add some data.')
-temp = input('\nPick a number from 1-15 and enter it here: ')
-print('\nThis corresponds to a string stored in the label map; the one indexed by ' + str(temp) +', not the '+str(temp)+'th element - that is why the label map has a leading \'null\' element, because most label maps in Object Detection APIs start numbering from 1.')
-input()
-print('The program adds the index to a buffer. Of course, the buffer can be transmitted manually, but it is more efficient to wait until it is full.\n')
+while True:
+    try:
+        temp = int(input('\nPick a suitable index from the label map and enter it here: '))
+    except:
+        print('\tThat wasn\'t an integer! Try again.')
+    else:
+        if temp > (len(c.label_map)-1):
+            print('\tIndex out of bounds! Try again.')
+        else:
+            break
+
 print('>>> c.send(' + str(temp) + ')')
 input()
 c.send(int(temp))
 print(line)
+print('This adds the index to buffer.')
 input()
 print('You can confirm that this is indeed the string indexed by the value you entered.\n')
 print('>>> c.label_map['+str(temp)+']')
 input()
 print(c.label_map[int(temp)])
+print(line)
+input()
+print('We could also just send a string directly')
+while True:
+    try:
+        temp = int(input('\nPick a suitable index from the label map and enter it here: '))
+    except:
+        print('\tThat wasn\'t an integer! Try again.')
+    else:
+        if temp > (len(c.label_map)-1):
+            print('\tIndex out of bounds! Try again.')
+        else:
+            break
+print('\nThat index corresponds to \''+c.label_map[int(temp)]+'\'\n')
+print('>>> c.send(\''+c.label_map[int(temp)]+'\')')
+input()
+c.send(c.label_map[int(temp)])
 print(line)
 input()
 print('We can see the contents of our buffer at any time using this command:')
@@ -81,7 +106,16 @@ print(line)
 input()
 print('Let\'s add data one more time, but using a loop.\n')
 input()
-num = input('Pick a number from 1-15: ')
+while True:
+    try:
+        num = int(input('\nPick a suitable index from the label map and enter it here: '))
+    except:
+        print('\tThat wasn\'t an integer! Try again.')
+    else:
+        if num > (len(c.label_map)-1):
+            print('\tIndex out of bounds! Try again.')
+        else:
+            break
 times = input('Enter the number of times you want that message to be sent (anything lesser than 593, but keep it small. <20 should do): ')
 print('>>> for i in range('+str(times)+'):')
 print('...\tc.send('+str(num)+')')
@@ -120,7 +154,16 @@ print(line)
 input()
 print('A quick example, let\'s see what happens when there is a buffer overflow.\n')
 input()
-temp = input('Pick a number from 1-15: ')
+while True:
+    try:
+        temp = int(input('\nPick a suitable index from the label map and enter it here: '))
+    except:
+        print('\tThat wasn\'t an integer! Try again.')
+    else:
+        if temp > (len(c.label_map)-1):
+            print('\tIndex out of bounds! Try again.')
+        else:
+            break
 print('Let\'s send that 600 times. The max buffer size is 594')
 print('>>> for i in range(600):')
 print('...\tc.send('+str(temp)+')')
