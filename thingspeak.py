@@ -8,7 +8,7 @@ import time
 import thingspeak_params
 
 '''
-Put "import thingspeak" or "from Thingspeak import Channel" near the top of your python file.
+Put "import thingspeak" or "from Thingspeak import channel" near the top of your python file.
 This module gives you a few functions to communicate over a specific Thingspeak channel.
 The channel is an object; which means it must be declared as one and methods must be called as members of the declared object.
 
