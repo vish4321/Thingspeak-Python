@@ -88,7 +88,7 @@ class channel:
             if item in self.label_map:
                 item = self.label_map.index(item)
             else:
-                print('Invalid input, ' + str(item) +' is not an integer.')
+                print('Invalid input.')
                 return
 
         #Append to a list. Note: one entry can only send 91 objects at a time, so we send 90 objects in one time.
