@@ -13,20 +13,21 @@ This module gives you a few functions to communicate over a specific Thingspeak 
 The channel is an object; which means it must be declared as one and methods must be called as members of the declared object.
 
 METHODS:
-X =channel(): 	Constructor. Can be given four optional parameters: channel_ID, write_API, read_API, and clear_API.
-		All of them can be found on Thingspeak channel settings. Defaults can be changed in def __init__()
-		Remember to use thingspeak.channel if the entire module is imported instead of the just the class.
-X.send(item):  	Buffer for strings that need to be sent over the channel. Parameter: string that needs to be sent.
-		All strings need to be members of the DOTA dataset - for exact syntax, look at the first variable in class definition.
+X =channel(): 	Constructor
+X.send(item):  	Buffer for data that need to be sent over the channel.
+                Either send the index or the label, either way only index is sent across the channel.
 X.transmit(): 	Transmits everything in the buffer sequentially.
-X.get():	Returns a collections.Counter() object (can be manipulated like a dict)
-		Key - object type; Value - number of times that object was sent over the channel.
+X.get():	Returns a dictionary that maps labels to the number of occurrences across all entries in the channel.
 X.get_table():	Calls the get() method, and presents the items as a table.
 X.get_img():	Calls the get() method, and then plots the key-value pairs on a bar graph
 X.clear():	Clears all messages in the channel.
 
-X.read_url:	Copy-paste the result of this (when you run it in python3 terminal) to see all JSON objects added in the
-		channel in the last 24 hours.
+USEFUL MEMBERS:
+X.read_url:	    Copy-paste the result of this (when you run it in python3 interpreter) to see all JSON objects added in the
+                    channel.
+X.numberOfMessages: Number of messages (not entries; 1 entry takes up to 594 messages) in the channel. Gets synced each time a
+                    transmit() method is called, or at the time of instantiation.
+X.itemlist:         Current unsent buffer
 '''
 
 class channel:
