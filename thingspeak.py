@@ -76,7 +76,7 @@ class channel:
         url = 'https://api.thingspeak.com/channels/' + self.channel_ID + '/feeds/last?api_key=' + self.read_API
         f = urllib.request.urlopen(url)
         data = json.load(f)
-        return f.getcode()
+        return data
 
     #Add object to buffer
     def send(self,item):
@@ -120,6 +120,10 @@ class channel:
         while k<=i and  itemwords[k] is not None:
             url_end += '&field'+str(k+1)+'='+itemwords[k]
             k += 1
+
+        last_data = self.get_last_entry()
+        self.numberOfMessages = int(last_data.get('field8'))
+        
 
         #The last field is for cumulative total of objects, not regular data.
         url_end += '&field8=' + str(length + self.numberOfMessages)
