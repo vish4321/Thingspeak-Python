@@ -58,6 +58,7 @@ print(line)
 print('Enter the URL above into your browser window. Preferable one that formats JSON objects, like Firefox, because Thingspeak primarily sends and receives data using JSON objects (though XML can also be used.)')
 input()
 print('We see that the channel is empty. So, time to add some data.')
+
 while True:
     try:
         temp = int(input('\nPick a suitable index from the label map and enter it here: '))
